@@ -27,7 +27,7 @@ const FAQ = () => {
     },
     {
       question: "Can I participate solo?",
-      answer: "Yes, solo participation is allowed. However, we encourage forming teams for the best networking and collaborative experience, but going solo is totally fine! "
+      answer: "No, solo participation is not allowed. "
     }
   ];
 

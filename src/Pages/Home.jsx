@@ -51,16 +51,20 @@ const Home = () => {
           </h1>
 
           {/* Hanging Date */}
-          {/* <div className="flex justify-center items-end gap-4 mb-8">
-            {["3", "0", "A", "U", "G"].map((char, index) => (
-              <div key={index} className="flex flex-col items-center sway">
-                <div className="w-1 h-12 bg-white"></div>
-                <div className="text-2xl md:text-6xl font-pixel text-white px-4 py-2 shadow-lg rounded-md">
-                  {char !== " " ? char : "\u00A0"}
-                </div>
-              </div>
-            ))}
-          </div> */}
+     <div className="flex justify-center items-center gap-2 md:gap-4 mb-8 font-pixel text-white text-lg md:text-2xl">
+  {["30", "31st", "AUG", "2025"].map((item, index) => (
+    <div
+      key={index}
+      className="bg-gradient-to-r   to-[#ffb347] text-white  "
+    >
+      {item}
+    </div>
+  ))}
+</div>
+
+
+
+
 
           <motion.p
             className="text-xl md:text-2xl font-pixel mb-8 text-whitenpm"

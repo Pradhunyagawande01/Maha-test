@@ -210,48 +210,41 @@ const About = () => {
           icon: "🎨",
           title: "Pixel Art Contest",
           date: "📅 16th May 2025",
-          location: "📍 Virtual Event",
-          description:
-            "Show off your pixel art skills and compete for prizes in this fun community contest.",
-          link: "https://lu.ma/zhk2e7ps",
-          concluded: true,
+           concluded: true,   
         },
         {
           icon: "💡",
           title: "Idea to MVP ",
           date: "📅 17th May 2025",
-          location: "📍 Innovation Hub, Floor 3",
-          description:
-            "Learn how to transform your ideas into viable products with expert guidance.",
-          link: "https://lu.ma/jkovsn5c",
-          concluded: true,
+           concluded: true,
+         
         },
         {
           icon: "🎯",
           title: "Skribbl Game Night",
           date: "📅 23rd May 2025",
-          location: "📍 Virtual Event",
-          description:
-            "Join our multiplayer drawing and guessing game for a fun-filled evening.",
-          link: "https://lu.ma/8cai0u6z",
-          concluded: true,
+            concluded: true,
+           
         },
         {
           icon: "👩‍💻",
           title: "Women Who Code, Lead & Inspire",
           date: "📅 7th June 2025 | 🕐 6:00 PM - 8:00 PM",
-          location: " Virtual Event",
-          description:
-            "A networking and mentorship event celebrating women in technology.",
-            concluded: true,
+           concluded: true,
+        },
+         {
+          icon: "💡",
+          title: "Let's Talk Open Source and Communities",
+          date: "📅 28th May 2025",
+           
+          
+          concluded: true,
         },
         {
           icon: "🔥",
           title: "Free Fire Tournament",
-          date: "📅 13th June 2025 | 🕐 6:00 PM – 9:00 PM",
-          location: "📍 eSports Arena",
-          description:
-            "Compete in teams of four in our exciting Free Fire mobile game tournament.",
+          date: "📅 13th July 2025 | 🕐 6:00 PM – 9:00 PM",
+           
         },
       ].map((event, i) => (
         <motion.div
@@ -309,7 +302,7 @@ const About = () => {
   </div>
 </section>
 
-<Upcoming />
+ 
 
 
 

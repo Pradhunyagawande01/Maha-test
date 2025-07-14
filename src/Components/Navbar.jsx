@@ -64,7 +64,7 @@ const Navbar = () => {
                      } 
                      lg:space-x-6 p-8 lg:p-0 overflow-auto lg:overflow-visible z-40`}
         >
-          {["Home", "About", "Team", "FAQ"].map(
+          {["Home", "About", "Tracks","Prize", "Team", "FAQ"].map(
             (item) => (
               <li key={item} className="my-4 lg:my-0">
                 <button
