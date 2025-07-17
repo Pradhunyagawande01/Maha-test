@@ -1,43 +1,97 @@
 import React, { useState, useEffect, useRef } from "react";
 import {
-  Compass, Anchor, Ship, Skull, Gem, 
-  Sword, Map, Coins, Wind, Feather, Sparkles
+  Gamepad2, Trophy, Star, Zap, Crown, 
+  Target, Joystick, Cpu, Sparkles, Coins
 } from "lucide-react";
 import SectionTitle from '../Components/SectionTitle';
 
-
-const TreasureParticle = ({ isActive }) => {
-  const randomRotation = Math.random() * 360;
-  const randomDelay = Math.random() * 2;
-  const size = Math.random() * 8 + 4;
-
+const PixelParticle = ({ isActive }) => {
+  const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#F9CA24', '#F0932B', '#EB4D4B', '#6C5CE7', '#00D2D3'];
+  const randomColor = colors[Math.floor(Math.random() * colors.length)];
+  const size = Math.random() > 0.5 ? 8 : 16; // Only 8px or 16px sizes for pixel effect
+  
   return (
     <div
-      className={`absolute rounded-full transition-all duration-1000 ${
+      className={`absolute transition-all duration-1000 pixel-particle ${
         isActive ? "opacity-100 scale-100" : "opacity-0 scale-0"
       }`}
       style={{
-        background: `linear-gradient(${randomRotation}deg, #fbbf24, #f59e0b)`,
-        animation: isActive
-          ? `particleFloat 3s ${randomDelay}s infinite, particleFade 3s ${randomDelay}s infinite`
-          : "none",
+        backgroundColor: randomColor,
         width: `${size}px`,
         height: `${size}px`,
         left: `${Math.random() * 100}%`,
         top: `${Math.random() * 100}%`,
+        animation: isActive ? `pixelFloat 2s infinite, pixelBlink 1s infinite` : "none",
+        animationDelay: `${Math.random() * 2}s`,
+        imageRendering: 'pixelated',
+        imageRendering: '-moz-crisp-edges',
+        imageRendering: 'crisp-edges',
       }}
     />
   );
 };
 
-const PrizeCard = ({ position, amount, icon: Icon, description, delay }) => {
+const PrizeCard = ({ position, amount, icon: Icon, description, delay, tier }) => {
   const [isHovered, setIsHovered] = useState(false);
-  const [rotation, setRotation] = useState({ x: 0, y: 0 });
   const [count, setCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
+  const [glitchOffset, setGlitchOffset] = useState({ x: 0, y: 0 });
   const cardRef = useRef(null);
 
-  // Intersection Observer setup
+  // Tier colors (8-bit palette)
+  const tierStyles = {
+    gold: {
+      primary: '#FFD700',
+      secondary: '#FFA500',
+      bg: '#1A1A00',
+      border: '#FFD700',
+      shadow: '#FFD700',
+      text: '#FFFFFF'
+    },
+    silver: {
+      primary: '#C0C0C0',
+      secondary: '#A0A0A0',
+      bg: '#1A1A1A',
+      border: '#C0C0C0',
+      shadow: '#C0C0C0',
+      text: '#FFFFFF'
+    },
+    bronze: {
+      primary: '#CD7F32',
+      secondary: '#A0522D',
+      bg: '#1A0F00',
+      border: '#CD7F32',
+      shadow: '#CD7F32',
+      text: '#FFFFFF'
+    },
+    special: {
+      primary: '#FF6B6B',
+      secondary: '#cc2424',
+      bg: '#0F0F1A',
+      border: '#FF6B6B',
+      shadow: '#FF6B6B',
+      text: '#FFFFFF'
+    }
+  };
+
+  const currentTier = tierStyles[tier] || tierStyles.special;
+
+  // Glitch effect
+  useEffect(() => {
+    let glitchInterval;
+    if (isHovered) {
+      glitchInterval = setInterval(() => {
+        setGlitchOffset({
+          x: Math.random() * 4 - 2,
+          y: Math.random() * 4 - 2
+        });
+        setTimeout(() => setGlitchOffset({ x: 0, y: 0 }), 50);
+      }, 100);
+    }
+    return () => clearInterval(glitchInterval);
+  }, [isHovered]);
+
+  // Intersection Observer
   useEffect(() => {
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -46,10 +100,7 @@ const PrizeCard = ({ position, amount, icon: Icon, description, delay }) => {
           observer.unobserve(entry.target);
         }
       },
-      {
-        threshold: 0.3,
-        rootMargin: "50px",
-      }
+      { threshold: 0.3, rootMargin: "50px" }
     );
 
     if (cardRef.current) {
@@ -63,7 +114,7 @@ const PrizeCard = ({ position, amount, icon: Icon, description, delay }) => {
     };
   }, []);
 
-  // Counter animation effect
+  // Counter animation
   useEffect(() => {
     let frameId;
     if (isVisible) {
@@ -82,99 +133,72 @@ const PrizeCard = ({ position, amount, icon: Icon, description, delay }) => {
     return () => cancelAnimationFrame(frameId);
   }, [isVisible, amount]);
 
-  const handleMouseMove = (e) => {
-    if (!cardRef.current || !isVisible) return;
-
-    const rect = cardRef.current.getBoundingClientRect();
-    const x = (e.clientY - rect.top) / rect.height - 0.5;
-    const y = (e.clientX - rect.left) / rect.width - 0.5;
-
-    setRotation({
-      x: x * 35,
-      y: y * 35,
-    });
-  };
-
   return (
     <div
       ref={cardRef}
-      className="perspective-1000 group"
-      onMouseMove={handleMouseMove}
+      className="pixel-card-container"
       onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => {
-        setIsHovered(false);
-        setRotation({ x: 0, y: 0 });
-      }}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <div
-        className={`
-          transform-gpu transition-all duration-700
-          rounded-2xl p-4 sm:p-8 border-4
-          relative overflow-hidden cursor-pointer
-          ${isVisible ? "shadow-[0_0_50px_10px_rgba(245,158,11,0.3)]" : "shadow-none"}
-          bg-white/10 backdrop-blur-lg rounded-xl border border-white/20 shadow-xl
-        `}
+        className={`pixel-card ${isVisible ? 'visible' : ''} ${isHovered ? 'hovered' : ''}`}
         style={{
-          transform: isVisible
-            ? `
-              perspective(1000px)
-              rotateX(${rotation.x}deg) 
-              rotateY(${-rotation.y}deg)
-              scale3d(${isHovered ? 1.1 : 1}, ${isHovered ? 1.1 : 1}, 1)
-            `
-            : "scale(0.8) rotateY(180deg)",
-          transition: "all 0.8s cubic-bezier(0.34, 1.56, 0.64, 1)",
+          '--primary-color': currentTier.primary,
+          '--secondary-color': currentTier.secondary,
+          '--bg-color': currentTier.bg,
+          '--border-color': currentTier.border,
+          '--shadow-color': currentTier.shadow,
+          '--text-color': currentTier.text,
+          transform: `translate(${glitchOffset.x}px, ${glitchOffset.y}px) scale(${isVisible ? 1 : 0.8})`,
           transitionDelay: `${delay}s`
         }}
       >
-        {isVisible && [...Array(10)].map((_, i) => (
-          <TreasureParticle key={i} isActive={isHovered} />
+        {/* Pixel border decorations */}
+        <div className="pixel-corners">
+          <div className="pixel-corner top-left"></div>
+          <div className="pixel-corner top-right"></div>
+          <div className="pixel-corner bottom-left"></div>
+          <div className="pixel-corner bottom-right"></div>
+        </div>
+
+        {/* Scanlines */}
+        <div className="scanlines"></div>
+
+        {/* Particles */}
+        {isVisible && [...Array(8)].map((_, i) => (
+          <PixelParticle key={i} isActive={isHovered} />
         ))}
 
-        <div
-          className={`relative z-10 flex flex-col items-center text-center space-y-4 sm:space-y-6 transition-all duration-1000 ${
-            isVisible ? "opacity-100 rotate-0" : "opacity-0 rotate-180"
-          }`}
-        >
-          <div className="p-5 bg-orange-600/90 rounded-full shadow-[0_0_40px_8px_rgba(245,158,11,0.4)] transform-gpu transition-all duration-500">
-            <Icon
-              className={`w-8 h-8 sm:w-10 sm:h-10 ${
-                isVisible ? "text-orange-300 animate-pulse" : "text-orange-600"
-              }`}
-            />
+        <div className="pixel-content">
+          {/* Icon container */}
+          <div className="pixel-icon-container">
+            <div className="pixel-icon-bg"></div>
+            <Icon className="pixel-icon" />
           </div>
 
-          <h3
-            className={`text-xl sm:text-2xl font-bold ${
-              isVisible ? "text-yellow-500" : "text-amber-900/0"
-            }`}
-            style={{ fontFamily: '"Pirata One", cursive' }}
-          >
-            {position}
-          </h3>
-
-          <div
-            className={`transform-gpu transition-all duration-500 ${
-              isHovered && isVisible ? "scale-110" : ""
-            }`}
-          >
-            <div className="text-3xl sm:text-4xl font-bold text-white relative">
-              ₹{count.toLocaleString()}
-              <Sparkles
-                className={`absolute -right-8 -top-4 w-6 h-6 ${
-                  isVisible ? "text-yellow-400 animate-spin" : "text-amber-900/0"
-                }`}
-              />
-            </div>
+          {/* Title */}
+          <div className="pixel-title-container">
+            <h3 className="pixel-title">{position}</h3>
+            {tier === 'gold' && <div className="pixel-crown">👑</div>}
           </div>
 
+          {/* Amount */}
+          <div className="pixel-amount-container">
+            <div className="pixel-amount">₹{count.toLocaleString()}</div>
+            <div className="pixel-coin">🪙</div>
+          </div>
+
+          {/* Description */}
           {description && (
-            <p className={`text-sm sm:text-lg ${
-              isVisible ? "text-amber-800" : "text-amber-900/0"
-            }`}>
-              {description}
-            </p>
+            <p className="pixel-description">{description}</p>
           )}
+
+          {/* Pixel dots decoration */}
+          <div className="pixel-dots">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="pixel-dot" style={{ animationDelay: `${i * 0.2}s` }}></div>
+            ))}
+          </div>
         </div>
       </div>
     </div>
@@ -182,98 +206,420 @@ const PrizeCard = ({ position, amount, icon: Icon, description, delay }) => {
 };
 
 const Prize = () => {
-  const titleRef = useRef(null);
-  const [isTitleVisible, setIsTitleVisible] = useState(false);
+  const [backgroundPixels, setBackgroundPixels] = useState([]);
 
   useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        setIsTitleVisible(entry.isIntersecting);
-      },
-      { threshold: 0.1 }
-    );
-
-    if (titleRef.current) {
-      observer.observe(titleRef.current);
+    // Generate random background pixels
+    const pixels = [];
+    for (let i = 0; i < 100; i++) {
+      pixels.push({
+        id: i,
+        x: Math.random() * 100,
+        y: Math.random() * 100,
+        size: Math.random() > 0.7 ? 16 : 8,
+        color: ['#FF6B6B', '#F9CA24', '#F9CA24'][Math.floor(Math.random() * 4)],
+        delay: Math.random() * 5
+      });
     }
-
-    return () => {
-      if (titleRef.current) {
-        observer.unobserve(titleRef.current);
-      }
-    };
+    setBackgroundPixels(pixels);
   }, []);
 
   return (
-    <div className="min-h-screen flex items-center justify-center w-full bg-space-blue/30 p-[4vh]">
+    <div className="pixel-prize-container">
+      <div className="pixel-content-wrapper">
+        <SectionTitle centered={true} containerClass="mb-10 text-lg">
+          <span > PRIZES </span>
+        </SectionTitle>
 
-
-      <style>
-        {`
-          @keyframes particleFloat {
-            0%, 100% { transform: translate(0, 0) rotate(0deg); }
-            25% { transform: translate(50px, -50px) rotate(90deg); }
-            50% { transform: translate(0, -100px) rotate(180deg); }
-            75% { transform: translate(-50px, -50px) rotate(270deg); }
-          }
-
-          @keyframes particleFade {
-            0%, 100% { opacity: 0; }
-            50% { opacity: 1; }
-          }
-
-          @keyframes float {
-            0%, 100% { transform: translateY(0) rotate(0deg); }
-            50% { transform: translateY(-20px) rotate(5deg); }
-          }
-
-          .animate-float { animation: float 6s ease-in-out infinite; }
-          .perspective-1000 { perspective: 1000px; }
-        `}
-      </style>
-
-      <div className="max-w-7xl mx-auto text-center">
-       <SectionTitle centered={true} containerClass="mb-10 text-lg">Prize</SectionTitle>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-1 mt-8">
+        {/* Winner */}
+        <div className="prize-row single">
           <PrizeCard
-            position="Winner"
+            position="🥇 GRAND CHAMPION"
             amount={15000}
-            icon={Ship}
+            icon={Trophy}
+            tier="gold"
+            delay={0}
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 mt-8">
+        {/* Runners-up */}
+        <div className="prize-row double">
           <PrizeCard
-            position="Runner-Up"
+            position="🥈 RUNNER-UP"
             amount={10000}
-            icon={Anchor}
-          
+            icon={Star}
+            tier="silver"
+            delay={0.2}
           />
           <PrizeCard
-            position="2ⁿᵈ Runner-Up"
+            position="🥉 2ᴺᴰ RUNNER-UP"
             amount={7000}
-            icon={Sword}
-           
+            icon={Zap}
+            tier="bronze"
+            delay={0.4}
           />
         </div>
 
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 mt-8">
+        {/* Special Categories */}
+        <div className="prize-row double">
           <PrizeCard
-            position="Best Beginner Team"
+            position=" BEST BEGINNER TEAM"
             amount={4000}
-            icon={Gem}
-            description=""
-            
+            icon={Gamepad2}
+            tier="special"
+            delay={0.6}
           />
           <PrizeCard
-            position="Best Girls Team"
+            position="👑 BEST GIRLS TEAM"
             amount={4000}
-            icon={Gem}
-            description=""
-            
+            icon={Crown}
+            tier="special"
+            delay={0.8}
           />
         </div>
+
+        
+        
       </div>
+
+      <style jsx>{`
+        @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+        
+       
+        
+       
+        
+        .bg-pixel {
+          position: absolute;
+          image-rendering: pixelated;
+          image-rendering: -moz-crisp-edges;
+          image-rendering: crisp-edges;
+          animation: pixelTwinkle 3s infinite;
+        }
+        
+        .pixel-grid {
+          position: absolute;
+          inset: 0;
+          background-image: 
+            linear-gradient(rgba(0,255,255,0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0,255,255,0.1) 1px, transparent 1px);
+          background-size: 32px 32px;
+          animation: gridScroll 20s linear infinite;
+          pointer-events: none;
+        }
+        
+        .pixel-content-wrapper {
+          position: relative;
+          z-index: 10;
+          max-width: 1200px;
+          margin: 0 auto;
+        }
+        
+        .pixel-main-title {
+          font-family: 'Press Start 2P', monospace;
+          font-size: 2rem;
+          color: #00ffff;
+          text-shadow: 
+            2px 2px 0px #ff00ff,
+            4px 4px 0px #ffff00,
+            6px 6px 0px #ff0000;
+          animation: titleGlow 2s infinite alternate;
+          image-rendering: pixelated;
+          image-rendering: -moz-crisp-edges;
+          image-rendering: crisp-edges;
+        }
+        
+        .prize-row {
+          display: grid;
+          gap: 2rem;
+          margin-bottom: 3rem;
+        }
+        
+        .prize-row.single {
+          grid-template-columns: 1fr;
+          max-width: 600px;
+          margin: 0 auto 3rem auto;
+        }
+        
+        .prize-row.double {
+          grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+        }
+        
+        .pixel-card-container {
+          perspective: 1000px;
+        }
+        
+        .pixel-card {
+          background: var(--bg-color);
+          border: 4px solid var(--border-color);
+          padding: 2rem;
+          position: relative;
+          transition: all 0.3s ease;
+          image-rendering: pixelated;
+          image-rendering: -moz-crisp-edges;
+          image-rendering: crisp-edges;
+          box-shadow: 
+            0 0 20px var(--shadow-color),
+            inset 0 0 20px rgba(255,255,255,0.1);
+          opacity: 0;
+          transform: scale(0.8);
+        }
+        
+        .pixel-card.visible {
+          opacity: 1;
+          transform: scale(1);
+        }
+        
+        .pixel-card.hovered {
+          transform: scale(1.05);
+          box-shadow: 
+            0 0 40px var(--shadow-color),
+            inset 0 0 40px rgba(255,255,255,0.2);
+        }
+        
+        .pixel-corners {
+          position: absolute;
+          inset: 0;
+          pointer-events: none;
+        }
+        
+        .pixel-corner {
+          position: absolute;
+          width: 16px;
+          height: 16px;
+          background: var(--primary-color);
+          image-rendering: pixelated;
+          image-rendering: -moz-crisp-edges;
+          image-rendering: crisp-edges;
+        }
+        
+        .pixel-corner.top-left { top: -8px; left: -8px; }
+        .pixel-corner.top-right { top: -8px; right: -8px; }
+        .pixel-corner.bottom-left { bottom: -8px; left: -8px; }
+        .pixel-corner.bottom-right { bottom: -8px; right: -8px; }
+        
+        .scanlines {
+          position: absolute;
+          inset: 0;
+          background: linear-gradient(
+            transparent 0%,
+            rgba(0,255,255,0.1) 50%,
+            transparent 100%
+          );
+          animation: scanlineMove 2s infinite;
+          pointer-events: none;
+        }
+        
+        .pixel-content {
+          position: relative;
+          z-index: 10;
+          text-align: center;
+          color: var(--text-color);
+        }
+        
+        .pixel-icon-container {
+          position: relative;
+          display: inline-block;
+          margin-bottom: 1rem;
+        }
+        
+        .pixel-icon-bg {
+          position: absolute;
+          inset: -8px;
+          background: var(--primary-color);
+          border: 4px solid var(--secondary-color);
+          image-rendering: pixelated;
+          image-rendering: -moz-crisp-edges;
+          image-rendering: crisp-edges;
+        }
+        
+        .pixel-icon {
+          position: relative;
+          z-index: 10;
+          width: 3rem;
+          height: 3rem;
+          color: var(--bg-color);
+          filter: contrast(2);
+        }
+        
+        .pixel-title-container {
+          position: relative;
+          margin-bottom: 1rem;
+        }
+        
+        .pixel-title {
+          font-family: 'Press Start 2P', monospace;
+          font-size: 1.2rem;
+          color: var(--primary-color);
+          text-shadow: 2px 2px 0px var(--secondary-color);
+          margin-bottom: 0.5rem;
+          image-rendering: pixelated;
+          image-rendering: -moz-crisp-edges;
+          image-rendering: crisp-edges;
+        }
+        
+        .pixel-crown {
+          position: absolute;
+          top: -2rem;
+          left: 50%;
+          transform: translateX(-50%);
+          font-size: 1.5rem;
+          animation: crownBounce 1s infinite;
+        }
+        
+        .pixel-amount-container {
+          position: relative;
+          margin-bottom: 1rem;
+        }
+        
+        .pixel-amount {
+          font-family: 'Press Start 2P', monospace;
+          font-size: 2rem;
+          color: var(--primary-color);
+          text-shadow: 
+            2px 2px 0px var(--secondary-color),
+            4px 4px 0px rgba(0,0,0,0.5);
+          animation: amountPulse 2s infinite;
+          image-rendering: pixelated;
+          image-rendering: -moz-crisp-edges;
+          image-rendering: crisp-edges;
+        }
+        
+        .pixel-coin {
+          position: absolute;
+          top: -0.5rem;
+          right: -2rem;
+          font-size: 1.5rem;
+          animation: coinSpin 2s infinite;
+        }
+        
+        .pixel-description {
+          font-family: 'Press Start 2P', monospace;
+          font-size: 0.7rem;
+          color: var(--secondary-color);
+          margin-bottom: 1rem;
+          image-rendering: pixelated;
+          image-rendering: -moz-crisp-edges;
+          image-rendering: crisp-edges;
+        }
+        
+        .pixel-dots {
+          display: flex;
+          justify-content: center;
+          gap: 0.5rem;
+        }
+        
+        .pixel-dot {
+          width: 8px;
+          height: 8px;
+          background: var(--primary-color);
+          animation: dotBlink 1s infinite;
+          image-rendering: pixelated;
+          image-rendering: -moz-crisp-edges;
+          image-rendering: crisp-edges;
+        }
+        
+        .pixel-footer {
+          text-align: center;
+          margin-top: 3rem;
+        }
+        
+        .pixel-footer-content {
+          display: inline-flex;
+          align-items: center;
+          gap: 1rem;
+          padding: 1rem 2rem;
+          background: rgba(0,0,0,0.8);
+          border: 4px solid #00ffff;
+          image-rendering: pixelated;
+          image-rendering: -moz-crisp-edges;
+          image-rendering: crisp-edges;
+        }
+        
+        .pixel-footer-icon {
+          width: 2rem;
+          height: 2rem;
+          color: #00ffff;
+          animation: iconPulse 1s infinite;
+        }
+        
+        .pixel-footer-text {
+          font-family: 'Press Start 2P', monospace;
+          font-size: 1rem;
+          color: #00ffff;
+          text-shadow: 2px 2px 0px #ff00ff;
+          image-rendering: pixelated;
+          image-rendering: -moz-crisp-edges;
+          image-rendering: crisp-edges;
+        }
+        
+        .pixel-particle {
+          image-rendering: pixelated;
+          image-rendering: -moz-crisp-edges;
+          image-rendering: crisp-edges;
+          pointer-events: none;
+        }
+        
+        @keyframes pixelFloat {
+          0%, 100% { transform: translate(0, 0); }
+          25% { transform: translate(20px, -20px); }
+          50% { transform: translate(-20px, -40px); }
+          75% { transform: translate(-40px, -20px); }
+        }
+        
+        @keyframes pixelBlink {
+          0%, 50% { opacity: 1; }
+          51%, 100% { opacity: 0.3; }
+        }
+        
+        @keyframes pixelTwinkle {
+          0%, 100% { opacity: 0.3; }
+          50% { opacity: 1; }
+        }
+
+        @keyframes crownBounce {
+          0%, 100% { transform: translateX(-50%) translateY(0); }
+          50% { transform: translateX(-50%) translateY(-10px); }
+        }
+        
+        @keyframes amountPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.1); }
+        }
+        
+        @keyframes coinSpin {
+          0% { transform: rotateY(0deg); }
+          100% { transform: rotateY(360deg); }
+        }
+        
+        @keyframes dotBlink {
+          0%, 50% { opacity: 1; }
+          51%, 100% { opacity: 0.3; }
+        }
+        
+        @keyframes iconPulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.2); }
+        }
+        
+        @media (max-width: 768px) {
+          .pixel-main-title {
+            font-size: 1.5rem;
+          }
+          
+          .pixel-title {
+            font-size: 0.9rem;
+          }
+          
+          .pixel-amount {
+            font-size: 1.5rem;
+          }
+          
+          .prize-row.double {
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
     </div>
   );
 };
